@@ -1,6 +1,7 @@
 import os
 import csv
 import sys
+from pathlib import Path
 from heapq import nlargest
 from tqdm import tqdm  # install with: pip install tqdm
 
@@ -17,7 +18,7 @@ def get_largest_files_to_csv(directory: str, top_n: int = 100, min_size_mb: floa
         for root, _, files in os.walk(directory):
             for file in files:
                 try:
-                    full_path = os.path.join(root, file)
+                    full_path = str(Path(root).joinpath(file).resolve())
                     size = os.path.getsize(full_path)
                     if size >= min_size_bytes:
                         file_sizes.append((size, full_path))
@@ -29,8 +30,11 @@ def get_largest_files_to_csv(directory: str, top_n: int = 100, min_size_mb: floa
     largest_files = nlargest(top_n, file_sizes, key=lambda x: x[0])
     csv_path = os.path.join(directory, "largest_files.csv")
 
+
     with open(csv_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
+        writer.writerow(["Folder:", directory])
+        writer.writerow([])
         writer.writerow(["Size (bytes)", "Size (MB)", "File Path"])
         for size, path in largest_files:
             writer.writerow([size, round(size / (1024 * 1024), 2), path])
